@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "contacts(rest-api)"
+name = "contacts-rest-api"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Nik Kor <3357381Nk@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = {extras = ["standart"], version = "^0.115.5"}
+fastapi = {extras = ["standard"], version = "^0.115.5"}
 
 
 [build-system]

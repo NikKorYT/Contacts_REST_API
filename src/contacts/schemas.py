@@ -8,3 +8,7 @@ class Contact(BaseModel):
     phone: int
     date_of_birth: date
     additional_info: str|None = None
+    
+class ContactResponse(BaseModel):
+    first_name: str
+    last_name: str

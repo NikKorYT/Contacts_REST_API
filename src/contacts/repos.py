@@ -1,6 +1,7 @@
 from sqlalchemy import select
 
 from src.contacts.models import Contact
+from src.contacts.schemas import ContactCreate
 
 class ContactRepository:
     
@@ -14,3 +15,13 @@ class ContactRepository:
         result = await self.session.execute(query)
         
         return result.scalar.one_or_none()
+    
+    
+    async def create_contact(self, contact: ContactCreate) -> Contact:
+        
+        new_contact = Contact(**contact.model_dump())
+        self.session.add(new_contact)
+        await self.session.commit()
+        await self.session.refresh(new_contact)
+        
+        return new_contact

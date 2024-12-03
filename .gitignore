@@ -8,3 +8,5 @@
 __pycache__
 *.py[cod]
 *$py.class
+src/contacts/__pycache__/router.cpython-310.pyc
+src/contacts/__pycache__/schemas.cpython-310.pyc

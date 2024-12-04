@@ -76,3 +76,18 @@ async def get_contacts(
     contact_repo = ContactRepository(db)
     contacts = await contact_repo.get_all_contacts(skip, limit)
     return contacts
+
+@router.get("/search/", response_model=List[ContactResponse])
+async def search_contacts(
+    query: str = Query(..., min_length=2, description="Search by name, surname or email"),
+    db: AsyncSession = Depends(get_db)
+):
+    contact_repo = ContactRepository(db)
+    contacts = await contact_repo.search_contacts(query)
+    return contacts
+
+@router.get("/birthdays/", response_model=List[ContactResponse])
+async def upcoming_birthdays(db: AsyncSession = Depends(get_db)):
+    contact_repo = ContactRepository(db)
+    contacts = await contact_repo.get_upcoming_birthdays()
+    return contacts

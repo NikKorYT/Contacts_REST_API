@@ -24,7 +24,6 @@ router = APIRouter()
 
 # Add new contact
 @router.post("/", response_model=ContactResponse)
-
 async def create_contact(contact: ContactCreate, db: AsyncSession = Depends(get_db)):
     contact_repo = ContactRepository(db)
     return await contact_repo.create_contact(contact)
@@ -35,7 +34,7 @@ async def create_contact(contact: ContactCreate, db: AsyncSession = Depends(get_
 async def get_contact(
     contact_id: int, db: AsyncSession = Depends(get_db)):
     contact_repo = ContactRepository(db)
-    contact = await contact_repo.get_contact(contact_id)
+    contact = await contact_repo.get_contacts(contact_id)
     if not contact:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
     return contact

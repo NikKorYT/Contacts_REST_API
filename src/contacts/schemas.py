@@ -15,7 +15,7 @@ class ContactResponse(Contact):
     id: int
 
     class Config:
-        from_atributes = True
+        from_attributes = True
 
 
 class ContactCreate(Contact):
@@ -23,4 +23,8 @@ class ContactCreate(Contact):
 
 
 class ContactUpdate(Contact):
+    pass
+
+
+class ContactDelete(Contact):
     pass

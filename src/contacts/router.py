@@ -38,3 +38,11 @@ async def get_contact(
     if not contact:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
     return contact
+
+@router.delete("/{contact_id}", response_model=ContactResponse)
+async def delete_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
+    contact_repo = ContactRepository(db)
+    contact = await contact_repo.delete_contact(contact_id)
+    if not contact:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
+    return contact

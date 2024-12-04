@@ -1,10 +1,11 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.contacts.models import Contact
 from src.contacts.schemas import ContactCreate
 
 class ContactRepository:
-    def __init__(self, session):
+    def __init__(self, session: AsyncSession):
         self.session = session
         
     async def get_contacts(self, contact_id: int) -> Contact:
@@ -18,3 +19,15 @@ class ContactRepository:
         await self.session.commit()
         await self.session.refresh(new_contact)
         return new_contact
+
+    async def delete_contact(self, contact_id: int):
+        query = select(Contact).where(Contact.id == contact_id)
+        result = await self.session.execute(query)
+        contact = result.scalar_one_or_none()
+        
+        if contact:
+            await self.session.delete(contact)
+            await self.session.commit()
+            await self.session.refresh(contact)
+        
+        return contact

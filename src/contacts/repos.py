@@ -46,3 +46,8 @@ class ContactRepository:
             await self.session.refresh(db_contact)
         
         return db_contact
+    
+    async def get_all_contacts(self, skip: int = 0, limit: int = 10) -> list[Contact]:
+        query = select(Contact).offset(skip).limit(limit)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())

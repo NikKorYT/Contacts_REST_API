@@ -31,18 +31,35 @@ async def create_contact(contact: ContactCreate, db: AsyncSession = Depends(get_
 
 # Get a specific contact(by ID)
 @router.get("/{contact_id}", response_model=ContactResponse)
-async def get_contact(
-    contact_id: int, db: AsyncSession = Depends(get_db)):
+async def get_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
     contact_repo = ContactRepository(db)
     contact = await contact_repo.get_contacts(contact_id)
     if not contact:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found"
+        )
     return contact
+
 
 @router.delete("/{contact_id}", response_model=ContactResponse)
 async def delete_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
     contact_repo = ContactRepository(db)
     contact = await contact_repo.delete_contact(contact_id)
     if not contact:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found"
+        )
+    return contact
+
+
+@router.put("/{contact_id}", response_model=ContactResponse)
+async def update_contact(
+    contact_id: int, contact: ContactCreate, db: AsyncSession = Depends(get_db)
+):
+    contact_repo = ContactRepository(db)
+    contact = await contact_repo.contact_update(contact_id, contact)
+    if not contact:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Contact not found"
+        )
     return contact

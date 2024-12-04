@@ -31,3 +31,18 @@ class ContactRepository:
             await self.session.refresh(contact)
         
         return contact
+    
+    async def contact_update(self, contact_id: int, contact_data: ContactCreate):
+        query = select(Contact).where(Contact.id == contact_id)
+        result = await self.session.execute(query)
+        db_contact = result.scalar_one_or_none()
+        
+        if db_contact:
+            # Update contact with new data
+            contact_values = contact_data.model_dump()
+            for key, value in contact_values.items():
+                setattr(db_contact, key, value)
+            await self.session.commit()
+            await self.session.refresh(db_contact)
+        
+        return db_contact

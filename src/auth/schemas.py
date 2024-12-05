@@ -13,3 +13,10 @@ class UserResponse(UserBase):
 class UserCreate(UserBase):
     password: str
     
+class TokenData(BaseModel):
+    username: str | None = None
+    
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    refresh_token: str

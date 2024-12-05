@@ -25,4 +25,4 @@ class UserRepository:
     async def get_user_by_email(self, email: str):
         query = select(User).where(User.email == email)
         result = await self.session.execute(query)
-        return result.scalars_one_or_none()
+        return result.scalar_one_or_none()

@@ -9,21 +9,6 @@ from src.contacts.schemas import Contact, ContactResponse, ContactCreate
 
 router = APIRouter()
 
-
-# # Add new contact
-# @router.post("/", response_model=ContactResponse)
-# async def create_contact(contact: Contact) -> ContactResponse:
-#     return ContactResponse(first_name=contact.name, last_name=contact.surname)
-
-
-# # Get all contacts
-# @router.get("/")
-# async def get_contacts(
-#     limit: int = Query(10, description="The number of contacts you want to retrieve")
-# ):
-#     return {"limit": limit}
-
-
 # Add new contact
 @router.post("/", response_model=ContactResponse)
 async def create_contact(contact: ContactCreate, db: AsyncSession = Depends(get_db)):

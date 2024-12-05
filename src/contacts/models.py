@@ -1,7 +1,11 @@
-from sqlalchemy import Integer, String, Date
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Integer, String, Date, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
 
 from config.db import Base
+
+if TYPE_CHECKING:
+    from src.auth.models import User
 
 class Contact(Base):
     __tablename__ = 'contacts'
@@ -13,3 +17,5 @@ class Contact(Base):
     phone: Mapped[int] = mapped_column(Integer)
     date_of_birth: Mapped[Date] = mapped_column(Date)
     additional_info: Mapped[str] = mapped_column(String, nullable=True)
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=True)
+    owner: Mapped["User"] = relationship("User", back_populates="contacts")

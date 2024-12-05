@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from src.contacts.models import Contact
+from src.auth.models import User
 from config.db import Base
 from config.general import settings
 

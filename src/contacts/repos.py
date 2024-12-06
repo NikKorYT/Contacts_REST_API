@@ -23,15 +23,10 @@ class ContactRepository:
         return new_contact
 
     async def delete_contact(self, contact_id: int):
-        query = select(Contact).where(Contact.id == contact_id)
-        result = await self.session.execute(query)
-        contact = result.scalar_one_or_none()
-
+        contact = await self.get_contacts(contact_id)
         if contact:
             await self.session.delete(contact)
             await self.session.commit()
-            await self.session.refresh(contact)
-
         return contact
 
     async def contact_update(self, contact_id: int, contact_data: ContactCreate):
@@ -49,38 +44,54 @@ class ContactRepository:
 
         return db_contact
 
-    async def get_all_contacts(self, skip: int = 0, limit: int = 10) -> list[Contact]:
-        query = select(Contact).offset(skip).limit(limit)
+    async def get_all_contacts(self, user_id: int, skip: int = 0, limit: int = 100) -> list[Contact]:
+        query = (
+            select(Contact)
+            .where(Contact.owner_id == user_id)
+            .offset(skip)
+            .limit(limit)
+        )
         result = await self.session.execute(query)
-        return list(result.scalars().all())
+        return result.scalars().all()
 
-    async def search_contacts(self, search_text: str) -> list[Contact]:
-        query = select(Contact).where(
-            or_(
-                Contact.name.ilike(f"%{search_text}%"),
-                Contact.surname.ilike(f"%{search_text}%"),
-                Contact.email.ilike(f"%{search_text}%"),
+    async def search_contacts(self, search_text: str, user_id: int) -> list[Contact]:
+        query = (
+            select(Contact)
+            .where(
+                and_(
+                    Contact.owner_id == user_id,
+                    or_(
+                        Contact.name.ilike(f"%{search_text}%"),
+                        Contact.surname.ilike(f"%{search_text}%"),
+                        Contact.email.ilike(f"%{search_text}%"),
+                    ),
+                )
             )
         )
         result = await self.session.execute(query)
-        return list(result.scalars().all())
+        return result.scalars().all()
 
-    async def get_upcoming_birthdays(self) -> list[Contact]:
+    async def get_upcoming_birthdays(self, user_id: int) -> list[Contact]:
         today = datetime.now().date()
         next_week = today + timedelta(days=7)
 
-        query = select(Contact).where(
-            or_(
+        query = (
+            select(Contact)
+            .where(
                 and_(
-                    extract("month", Contact.date_of_birth) == today.month,
-                    extract("day", Contact.date_of_birth) >= today.day,
-                    extract("day", Contact.date_of_birth) <= next_week.day,
-                ),
-                and_(
-                    extract("month", Contact.date_of_birth) == next_week.month,
-                    extract("day", Contact.date_of_birth) <= next_week.day,
-                ),
+                    Contact.owner_id == user_id,
+                    or_(
+                        and_(
+                            extract("month", Contact.date_of_birth) == today.month,
+                            extract("day", Contact.date_of_birth) >= today.day,
+                        ),
+                        and_(
+                            extract("month", Contact.date_of_birth) == next_week.month,
+                            extract("day", Contact.date_of_birth) <= next_week.day,
+                        ),
+                    ),
+                )
             )
         )
         result = await self.session.execute(query)
-        return list(result.scalars().all())
+        return result.scalars().all()

@@ -3,17 +3,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from config.db import get_db
+from src.auth.models import User
+from src.auth.utils import get_current_user
 from src.contacts.repos import ContactRepository
 from src.contacts.schemas import Contact, ContactResponse, ContactCreate
 
 
 router = APIRouter()
 
+
 # Add new contact
 @router.post("/", response_model=ContactResponse)
-async def create_contact(contact: ContactCreate, db: AsyncSession = Depends(get_db)):
+async def create_contact(
+    contact: ContactCreate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     contact_repo = ContactRepository(db)
-    return await contact_repo.create_contact(contact)
+
+    return await contact_repo.create_contact(contact, user.id)
 
 
 # Get a specific contact(by ID)
@@ -56,20 +64,25 @@ async def update_contact(
 async def get_contacts(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
-    db: AsyncSession = Depends(get_db)
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     contact_repo = ContactRepository(db)
-    contacts = await contact_repo.get_all_contacts(skip, limit)
+    contacts = await contact_repo.get_all_contacts(user.id, skip, limit)
     return contacts
+
 
 @router.get("/search/", response_model=List[ContactResponse])
 async def search_contacts(
-    query: str = Query(..., min_length=2, description="Search by name, surname or email"),
-    db: AsyncSession = Depends(get_db)
+    query: str = Query(
+        ..., min_length=2, description="Search by name, surname or email"
+    ),
+    db: AsyncSession = Depends(get_db),
 ):
     contact_repo = ContactRepository(db)
     contacts = await contact_repo.search_contacts(query)
     return contacts
+
 
 @router.get("/birthdays/", response_model=List[ContactResponse])
 async def upcoming_birthdays(db: AsyncSession = Depends(get_db)):

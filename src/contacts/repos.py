@@ -15,8 +15,8 @@ class ContactRepository:
         result = await self.session.execute(query)
         return result.scalar_one_or_none()  # Fixed: scalar_one_or_none()
 
-    async def create_contact(self, contact: ContactCreate) -> Contact:
-        new_contact = Contact(**contact.model_dump())
+    async def create_contact(self, contact: ContactCreate, owner_id: int) -> Contact:
+        new_contact = Contact(**contact.model_dump(), owner_id=owner_id)
         self.session.add(new_contact)
         await self.session.commit()
         await self.session.refresh(new_contact)

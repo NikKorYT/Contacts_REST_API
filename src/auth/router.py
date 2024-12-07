@@ -12,6 +12,7 @@ from src.auth.schemas import UserCreate, Token
 from src.auth.utils import (
     create_access_token,
     create_refresh_token,
+    decode_access_token,
     create_verification_token,
     decode_verification_token,
 )

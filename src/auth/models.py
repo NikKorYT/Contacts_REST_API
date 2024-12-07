@@ -16,3 +16,4 @@ class User(Base):
     email: Mapped[str] = mapped_column(String)
     hashed_password: Mapped[str] = mapped_column(String)
     contacts: Mapped[list["Contact"]] = relationship("Contact", back_populates="owner")
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=True)

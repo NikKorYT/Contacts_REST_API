@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query, Path, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from fastapi_limiter.depends import RateLimiter
 
 from config.db import get_db
 from src.auth.models import User
@@ -13,7 +14,8 @@ router = APIRouter()
 
 
 # Add new contact
-@router.post("/", response_model=ContactResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ContactResponse, status_code=status.HTTP_201_CREATED, 
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def create_contact(
     contact: ContactCreate,
     user: User = Depends(get_current_user),
@@ -100,7 +102,8 @@ async def update_contact(
     return updated_contact
 
 
-@router.get("/", response_model=List[ContactResponse])
+@router.get("/", response_model=List[ContactResponse],
+    dependencies=[Depends(RateLimiter(times=20, seconds=60))])
 async def get_contacts(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
@@ -112,7 +115,8 @@ async def get_contacts(
     return contacts
 
 
-@router.get("/search/", response_model=List[ContactResponse])
+@router.get("/search/", response_model=List[ContactResponse],
+    dependencies=[Depends(RateLimiter(times=30, seconds=60))])
 async def search_contacts(
     query: str = Query(..., min_length=2, description="Search by name, surname, or email"),
     user: User = Depends(get_current_user),

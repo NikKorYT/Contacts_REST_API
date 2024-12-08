@@ -38,3 +38,13 @@ class UserRepository:
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)
+
+    async def update_avatar(self, user_id: int, avatar_url: str):
+        query = select(User).where(User.id == user_id)
+        result = await self.session.execute(query)
+        user = result.scalar_one_or_none()
+        if user:
+            user.avatar_url = avatar_url
+            await self.session.commit()
+            await self.session.refresh(user)
+        return user

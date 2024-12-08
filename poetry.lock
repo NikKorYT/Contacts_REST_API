@@ -298,6 +298,24 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "cloudinary"
+version = "1.41.0"
+description = "Python and Django SDK for Cloudinary"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cloudinary-1.41.0.tar.gz", hash = "sha256:e189739a796a7d2ad15c19971741d33a9300816b16c0282b4b14ccf1dd2948c0"},
+]
+
+[package.dependencies]
+certifi = "*"
+six = "*"
+urllib3 = ">=1.26.5"
+
+[package.extras]
+dev = ["tox"]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -1107,13 +1125,13 @@ pycryptodome = ["pyasn1", "pycryptodome (>=3.3.1,<4.0.0)"]
 
 [[package]]
 name = "python-multipart"
-version = "0.0.18"
+version = "0.0.19"
 description = "A streaming multipart parser for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "python_multipart-0.0.18-py3-none-any.whl", hash = "sha256:efe91480f485f6a361427a541db4796f9e1591afc0fb8e7a4ba06bfbc6708996"},
-    {file = "python_multipart-0.0.18.tar.gz", hash = "sha256:7a68db60c8bfb82e460637fa4750727b45af1d5e2ed215593f917f64694d34fe"},
+    {file = "python_multipart-0.0.19-py3-none-any.whl", hash = "sha256:f8d5b0b9c618575bf9df01c684ded1d94a338839bdd8223838afacfb4bb2082d"},
+    {file = "python_multipart-0.0.19.tar.gz", hash = "sha256:905502ef39050557b7a6af411f454bc19526529ca46ae6831508438890ce12cc"},
 ]
 
 [[package]]
@@ -1403,6 +1421,23 @@ files = [
 ]
 
 [[package]]
+name = "urllib3"
+version = "2.2.3"
+description = "HTTP library with thread-safe connection pooling, file post, and more."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "urllib3-2.2.3-py3-none-any.whl", hash = "sha256:ca899ca043dcb1bafa3e262d73aa25c465bfb49e0bd9dd5d59f1d0acba2f8fac"},
+    {file = "urllib3-2.2.3.tar.gz", hash = "sha256:e7d814a81dad81e6caf2ec9fdedb284ecc9c73076b62654547cc64ccdcae26e9"},
+]
+
+[package.extras]
+brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
+h2 = ["h2 (>=4,<5)"]
+socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
+zstd = ["zstandard (>=0.18.0)"]
+
+[[package]]
 name = "uvicorn"
 version = "0.32.1"
 description = "The lightning-fast ASGI server."
@@ -1643,4 +1678,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "a5eb78467f1f5719e8dfa0a73a9e855718b81742a6f564538c45552563a2d26f"
+content-hash = "c39773421250416168bfc2f12e1ee2ce434bd2779f5936830f3ad78d5b7f8b0c"

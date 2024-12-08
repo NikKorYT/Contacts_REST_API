@@ -5,10 +5,12 @@ from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis
 from src.contacts.router import router as contacts_router
 from src.auth.router import router as auth_router
+from src.auth.cloudinary_config import init_cloudinary
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_cloudinary()
     redis_instance = redis.from_url(
         "redis://localhost:6379", encoding="utf-8", decode_responses=True
     )

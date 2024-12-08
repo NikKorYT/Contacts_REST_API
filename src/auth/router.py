@@ -1,11 +1,13 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from jinja2 import Environment, FileSystemLoader
 
 
 from config.db import get_db
+from src.auth.cloudinary_config import upload_avatar
 from src.auth.mail_utils import send_verification_email
+from src.auth.models import User
 from src.auth.pass_utils import verify_password
 from src.auth.repo import UserRepository
 from src.auth.schemas import UserCreate, Token
@@ -15,6 +17,7 @@ from src.auth.utils import (
     decode_access_token,
     create_verification_token,
     decode_verification_token,
+    get_current_user,
 )
 
 router = APIRouter()
@@ -103,3 +106,30 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
         )
     await user_repo.activate_user(user)
     return {"message": "Email verified"}
+
+
+@router.patch("/avatar", response_model=dict)
+async def update_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="File must be an image"
+        )
+
+    try:
+        # Upload to Cloudinary
+        avatar_url = await upload_avatar(await file.read(), current_user.id)
+
+        # Update user in database
+        user_repo = UserRepository(db)
+        await user_repo.update_avatar(current_user.id, avatar_url)
+
+        return {"avatar_url": avatar_url}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )

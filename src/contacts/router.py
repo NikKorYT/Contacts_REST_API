@@ -21,6 +21,19 @@ async def create_contact(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Create a new contact for the authenticated user.
+
+    Args:
+        contact (ContactCreate): Contact data to create
+        user (User): Current authenticated user from token
+        db (AsyncSession): Database session
+
+    Returns:
+        ContactResponse: Created contact data
+
+    Raises:
+        HTTPException: If rate limit exceeded
+    """
     contact_repo = ContactRepository(db)
 
     return await contact_repo.create_contact(contact, user.id)
@@ -33,6 +46,19 @@ async def get_contact(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    """Retrieve a specific contact by ID.
+
+    Args:
+        contact_id (int): ID of contact to retrieve
+        db (AsyncSession): Database session
+        user (User): Current authenticated user
+
+    Returns:
+        ContactResponse: Contact data if found
+
+    Raises:
+        HTTPException: If contact not found or doesn't belong to user
+    """
     contact_repo = ContactRepository(db)
     contact = await contact_repo.get_contacts(contact_id)
 
@@ -57,6 +83,16 @@ async def delete_contact(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    """Delete a specific contact.
+
+    Args:
+        contact_id (int): ID of contact to delete
+        user (User): Current authenticated user
+        db (AsyncSession): Database session
+
+    Raises:
+        HTTPException: If contact not found or doesn't belong to user
+    """
     contact_repo = ContactRepository(db)
     contact = await contact_repo.get_contacts(contact_id)
 
@@ -83,6 +119,20 @@ async def update_contact(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    """Update an existing contact.
+
+    Args:
+        contact_id (int): ID of contact to update
+        contact (ContactUpdate): New contact data
+        user (User): Current authenticated user
+        db (AsyncSession): Database session
+
+    Returns:
+        ContactResponse: Updated contact data
+
+    Raises:
+        HTTPException: If contact not found or doesn't belong to user
+    """
     contact_repo = ContactRepository(db)
     contact = await contact_repo.get_contacts(contact_id)
 
@@ -110,6 +160,17 @@ async def get_contacts(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Get paginated list of all contacts for the authenticated user.
+
+    Args:
+        skip (int): Number of records to skip for pagination
+        limit (int): Maximum number of records to return
+        user (User): Current authenticated user
+        db (AsyncSession): Database session
+
+    Returns:
+        List[ContactResponse]: List of contacts
+    """
     contact_repo = ContactRepository(db)
     contacts = await contact_repo.get_all_contacts(user.id, skip, limit)
     return contacts
@@ -122,6 +183,16 @@ async def search_contacts(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Search contacts by name, surname, or email.
+    
+    Args:
+        query (str): Search query string
+        user (User): Current authenticated user
+        db (AsyncSession): Database session
+    
+    Returns:
+        List[ContactResponse]: List of matching contacts
+    """
     contact_repo = ContactRepository(db)
     contacts = await contact_repo.search_contacts(query, user.id)
     return contacts
@@ -132,6 +203,16 @@ async def upcoming_birthdays(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Get contacts with birthdays in the next 7 days.
+    
+    Args:
+        user (User): Current authenticated user
+        db (AsyncSession): Database session
+        
+    Returns:
+        List[ContactResponse]: List of contacts with upcoming birthdays
+    """
+    
     contact_repo = ContactRepository(db)
     contacts = await contact_repo.get_upcoming_birthdays(user.id)
     return contacts

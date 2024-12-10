@@ -1,4 +1,12 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from jinja2 import Environment, FileSystemLoader
@@ -30,6 +38,10 @@ async def register(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
+    """Register new user and send verification email.
+
+    Rate limited endpoint that creates new user account and triggers verification email.
+    """
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_email(user_create.email)
     if user:
@@ -55,6 +67,7 @@ async def register(
 async def login_for_access_token(
     from_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
 ):
+    """Generate access and refresh tokens for valid credentials."""
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_username(from_data.username)
     if not user or not verify_password(from_data.password, user.hashed_password):
@@ -75,6 +88,7 @@ async def login_for_access_token(
     "/refresh-token", response_model=Token, status_code=status.HTTP_201_CREATED
 )
 async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
+    """Generate new access token using refresh token."""
     token_data = decode_access_token(refresh_token)
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_username(token_data.username)
@@ -90,19 +104,18 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
 
 @router.get("/verify-email")
 async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+    """Verify user's email address using verification token."""
     email = decode_verification_token(token)
     if email is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid verification token"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification token"
         )
-        
+
     user_repo = UserRepository(db)
     user = await user_repo.get_user_by_email(email)
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     await user_repo.activate_user(user)
     return {"message": "Email verified"}
@@ -114,6 +127,7 @@ async def update_avatar(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Upload user avatar to Cloudinary and update profile."""
     if not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File must be an image"

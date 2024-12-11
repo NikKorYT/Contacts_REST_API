@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: str
+    database_test_url: str
     secret_key: str
     mail_username: str = "test"
     mail_password: str = "test"

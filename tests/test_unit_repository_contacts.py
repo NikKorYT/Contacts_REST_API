@@ -84,6 +84,89 @@ class TestContactRepository(unittest.IsolatedAsyncioTestCase):
         self.session.add.assert_called_once()
         self.session.commit.assert_awaited_once()
         self.session.refresh.assert_awaited_once()
+        
+    async def test_delete_contact(self):
+        # Arrange
+        contact_id = 1
+        mock_contact = MockContact(
+            id=contact_id,
+            name="Test",
+            surname="User",
+            email="test@test.com",
+            phone=1234567890,
+            date_of_birth=date(1990, 1, 1),
+            owner_id=self.user_id
+        )
+        
+        # Mock get_contacts to return our mock contact
+        self.repo.get_contacts = AsyncMock(return_value=mock_contact)
+
+        # Act
+        result = await self.repo.delete_contact(contact_id)
+
+        # Assert
+        self.repo.get_contacts.assert_awaited_once_with(contact_id)
+        self.session.delete.assert_called_once_with(mock_contact)
+        self.session.commit.assert_awaited_once()
+        self.assertEqual(result, mock_contact)
+    async def test_contact_update_success(self):
+        # Arrange
+        contact_id = 1
+        updated_data = MockContactCreate(
+            name="Updated",
+            surname="User",
+            email="updated@test.com",
+            phone=9876543210,
+            date_of_birth=date(1990, 1, 1),
+        )
+
+        mock_contact = MockContact(
+            id=contact_id,
+            name="Original",
+            surname="User",
+            email="test@test.com",
+            phone=1234567890,
+            date_of_birth=date(1990, 1, 1),
+            owner_id=self.user_id,
+        )
+
+        # Setup mock execution result
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none = MagicMock(return_value=mock_contact)
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.contact_update(contact_id, updated_data)
+
+        # Assert
+        self.assertEqual(result.name, updated_data.name)
+        self.assertEqual(result.email, updated_data.email)
+        self.session.commit.assert_awaited_once()
+        self.session.refresh.assert_awaited_once_with(result)
+
+    async def test_contact_update_not_found(self):
+        # Arrange
+        contact_id = 999
+        updated_data = MockContactCreate(
+            name="Updated",
+            surname="User",
+            email="updated@test.com",
+            phone=9876543210,
+            date_of_birth=date(1990, 1, 1),
+        )
+
+        # Setup mock execution result for non-existent contact
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none = MagicMock(return_value=None)
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.contact_update(contact_id, updated_data)
+
+        # Assert
+        self.assertIsNone(result)
+        self.session.commit.assert_not_awaited()
+        self.session.refresh.assert_not_awaited()
 
 
 if __name__ == "__main__":

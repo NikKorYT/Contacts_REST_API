@@ -32,7 +32,15 @@ class MockContactCreate:
 
 class MockContact:
     id = MagicMock()
-    owner_id = MagicMock()  # Add this line
+    owner_id = MagicMock()
+    name = MagicMock()
+    surname = MagicMock()
+    email = MagicMock()
+    date_of_birth = MagicMock()
+
+    name.ilike = MagicMock(return_value=True)
+    surname.ilike = MagicMock(return_value=True)
+    email.ilike = MagicMock(return_value=True)
 
     def __init__(self, **kwargs):
         self._id = kwargs.get("id", 1)
@@ -43,10 +51,7 @@ class MockContact:
         self.date_of_birth = kwargs.get("date_of_birth")
         self.owner_id = kwargs.get("owner_id")
         self.owner = MockUser(id=self.owner_id) if self.owner_id else None
-
-    @classmethod
-    def id(cls):
-        return MagicMock()
+        pass
 
 
 # Mock select() before importing repository
@@ -232,6 +237,57 @@ class TestContactRepository(unittest.IsolatedAsyncioTestCase):
         # Assert
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].name, "Test3")
+        self.session.execute.assert_called_once()
+        
+    async def test_search_contacts_with_matches(self):
+        # Arrange
+        search_text = "test"
+        mock_contacts = [
+            MockContact(
+                id=1,
+                name="Test User",
+                surname="Smith",
+                email="test@test.com",
+                phone=1234567890,
+                date_of_birth=date(1990, 1, 1),
+                owner_id=self.user_id
+            ),
+            MockContact(
+                id=2,
+                name="John",
+                surname="Test",
+                email="john@test.com",
+                phone=9876543210,
+                date_of_birth=date(1990, 1, 1),
+                owner_id=self.user_id
+            )
+        ]
+        
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = mock_contacts
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.search_contacts(search_text, self.user_id)
+
+        # Assert
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].name, "Test User")
+        self.assertEqual(result[1].surname, "Test")
+        self.session.execute.assert_called_once()
+
+    async def test_search_contacts_no_matches(self):
+        # Arrange
+        search_text = "nonexistent"
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.search_contacts(search_text, self.user_id)
+
+        # Assert
+        self.assertEqual(len(result), 0)
         self.session.execute.assert_called_once()
 
 if __name__ == "__main__":

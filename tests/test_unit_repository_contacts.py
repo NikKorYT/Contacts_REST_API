@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import date
+from datetime import date, datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -31,7 +31,7 @@ class MockContactCreate:
 
 
 class MockContact:
-    id = MagicMock()
+    _id = MagicMock()
     owner_id = MagicMock()
     name = MagicMock()
     surname = MagicMock()
@@ -43,7 +43,7 @@ class MockContact:
     email.ilike = MagicMock(return_value=True)
 
     def __init__(self, **kwargs):
-        self._id = kwargs.get("id", 1)
+        self._instance_id = kwargs.get("id")
         self.name = kwargs.get("name")
         self.surname = kwargs.get("surname")
         self.email = kwargs.get("email")
@@ -51,7 +51,10 @@ class MockContact:
         self.date_of_birth = kwargs.get("date_of_birth")
         self.owner_id = kwargs.get("owner_id")
         self.owner = MockUser(id=self.owner_id) if self.owner_id else None
-        pass
+
+    @property
+    def id(self):
+        return self._instance_id if hasattr(self, "_instance_id") else self._id
 
 
 # Mock select() before importing repository
@@ -288,6 +291,125 @@ class TestContactRepository(unittest.IsolatedAsyncioTestCase):
 
         # Assert
         self.assertEqual(len(result), 0)
+        self.session.execute.assert_called_once()
+    
+    async def test_get_upcoming_birthdays_with_matches(self):
+        # Arrange
+        today = datetime.now().date()
+        mock_contacts = [
+            MockContact(
+                id=1,
+                name="Birthday Today",
+                surname="User1",
+                email="today@test.com",
+                phone=1234567890,
+                date_of_birth=date(1990, today.month, today.day),
+                owner_id=self.user_id
+            ),
+            MockContact(
+                id=2,
+                name="Birthday Next Week",
+                surname="User2",
+                email="nextweek@test.com",
+                phone=9876543210,
+                date_of_birth=date(1990, today.month, today.day + 5),
+                owner_id=self.user_id
+            )
+        ]
+        
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = mock_contacts
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.get_upcoming_birthdays(self.user_id)
+
+        # Assert
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].name, "Birthday Today")
+        self.assertEqual(result[1].name, "Birthday Next Week")
+        self.session.execute.assert_called_once()
+
+    async def test_get_upcoming_birthdays_no_matches(self):
+        # Arrange
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.get_upcoming_birthdays(self.user_id)
+
+        # Assert
+        self.assertEqual(len(result), 0)
+        self.session.execute.assert_called_once()
+
+    async def test_get_upcoming_birthdays_cross_month(self):
+        # Arrange
+        today = datetime.now().date()
+        next_month = today.replace(day=1) + timedelta(days=32)
+        mock_contacts = [
+            MockContact(
+                id=1,
+                name="Cross Month Birthday",
+                surname="User",
+                email="crossmonth@test.com",
+                phone=1234567890,
+                date_of_birth=date(1990, next_month.month, 1),
+                owner_id=self.user_id
+            )
+        ]
+        
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = mock_contacts
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.get_upcoming_birthdays(self.user_id)
+
+        # Assert
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].name, "Cross Month Birthday")
+        self.session.execute.assert_called_once()
+    
+    async def test_get_contacts_found(self):
+        # Arrange
+        contact_id = 1
+        mock_contact = MockContact(
+            id=contact_id,
+            name="Test",
+            surname="User",
+            email="test@test.com",
+            phone=1234567890,
+            date_of_birth=date(1990, 1, 1),
+            owner_id=self.user_id
+        )
+        
+        # Setup mock execution result
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_contact
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.get_contacts(contact_id)
+
+        # Assert
+        self.assertEqual(result.id, contact_id)
+        self.assertEqual(result.name, "Test")
+        self.assertEqual(result.email, "test@test.com")
+        self.session.execute.assert_called_once()
+
+    async def test_get_contacts_not_found(self):
+        # Arrange
+        contact_id = 999
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.get_contacts(contact_id)
+
+        # Assert
+        self.assertIsNone(result)
         self.session.execute.assert_called_once()
 
 if __name__ == "__main__":

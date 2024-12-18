@@ -31,9 +31,8 @@ class MockContactCreate:
 
 
 class MockContact:
-    @property
-    def id(self):
-        return MagicMock()
+    id = MagicMock()
+    owner_id = MagicMock()  # Add this line
 
     def __init__(self, **kwargs):
         self._id = kwargs.get("id", 1)
@@ -59,6 +58,7 @@ with patch("sqlalchemy.select") as mock_select:
 
 @patch("src.auth.models.User", MockUser)
 @patch("src.contacts.models.Contact", MockContact)
+
 class TestContactRepository(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.session = AsyncMock(spec=AsyncSession)
@@ -167,7 +167,72 @@ class TestContactRepository(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(result)
         self.session.commit.assert_not_awaited()
         self.session.refresh.assert_not_awaited()
+        
+    async def test_get_all_contacts_default_pagination(self):
+        # Arrange
+        mock_contacts = [
+            MockContact(
+                id=1,
+                name="Test1",
+                surname="User1",
+                email="test1@test.com",
+                phone=1234567890,
+                date_of_birth=date(1990, 1, 1),
+                owner_id=self.user_id
+            ),
+            MockContact(
+                id=2,
+                name="Test2",
+                surname="User2",
+                email="test2@test.com",
+                phone=9876543210,
+                date_of_birth=date(1990, 1, 1),
+                owner_id=self.user_id
+            )
+        ]
+        
+        # Setup mock execution result
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = mock_contacts
+        self.session.execute.return_value = mock_result
 
+        # Act
+        result = await self.repo.get_all_contacts(self.user_id)
+
+        # Assert
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].name, "Test1")
+        self.assertEqual(result[1].name, "Test2")
+        self.session.execute.assert_called_once()
+
+    async def test_get_all_contacts_custom_pagination(self):
+        # Arrange
+        skip = 2
+        limit = 2
+        mock_contacts = [
+            MockContact(
+                id=3,
+                name="Test3",
+                surname="User3",
+                email="test3@test.com",
+                phone=1234567890,
+                date_of_birth=date(1990, 1, 1),
+                owner_id=self.user_id
+            )
+        ]
+        
+        # Setup mock execution result
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = mock_contacts
+        self.session.execute.return_value = mock_result
+
+        # Act
+        result = await self.repo.get_all_contacts(self.user_id, skip=skip, limit=limit)
+
+        # Assert
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].name, "Test3")
+        self.session.execute.assert_called_once()
 
 if __name__ == "__main__":
     unittest.main()

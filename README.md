@@ -123,7 +123,6 @@ poetry run pytest --cov=src
 poetry run pytest tests/test_auth.py
 ```
 
-```
 
 ## Key Features
 
